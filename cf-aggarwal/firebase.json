@@ -1,0 +1,43 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": [
+    {
+      "target": "admin",
+      "public": "hosting-admin",
+      "cleanUrls": true,
+      "trailingSlash": true,
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    },
+    {
+      "target": "website",
+      "public": "hosting-website",
+      "cleanUrls": true,
+      "trailingSlash": true,
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    }
+  ],
+  "functions": [
+    {
+      "source": ".",
+      "codebase": "cf-aggarwal",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".firebase",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local",
+        "scripts"
+      ],
+      "predeploy": [
+        "npm run build"
+      ]
+    }
+  ]
+}

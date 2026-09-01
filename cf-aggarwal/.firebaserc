@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "aggarwal-sweets-d2a16"
+  },
+  "targets": {
+    "aggarwal-sweets-d2a16": {
+      "hosting": {
+        "admin": [
+          "admin-aggarwalsweets"
+        ],
+        "website": [
+          "aggarwalsweets"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

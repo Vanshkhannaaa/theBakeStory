@@ -1,0 +1,3 @@
+# Firebase Admin SDK (local dev only — production uses Application Default Credentials)
+service-account.json
+.next/dev

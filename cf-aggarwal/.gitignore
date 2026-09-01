@@ -1,0 +1,8 @@
+node_modules/
+lib/
+*.log
+.firebase/
+hosting-website/
+hosting-admin/
+firebase-debug.log
+firebase-debug.*.log
