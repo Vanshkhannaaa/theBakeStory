@@ -1,9 +1,6 @@
-import { Timestamp } from "firebase-admin/firestore";
-
 export function toDate(value: unknown): Date {
   if (!value) return new Date();
   if (value instanceof Date) return value;
-  if (value instanceof Timestamp) return value.toDate();
   if (typeof value === "object" && value !== null && "toDate" in value) {
     return (value as { toDate: () => Date }).toDate();
   }
@@ -16,11 +13,6 @@ export function toDate(value: unknown): Date {
 export function toDateOrNull(value: unknown): Date | null {
   if (!value) return null;
   return toDate(value);
-}
-
-export function serializeDate(date: Date | null | undefined): string | null {
-  if (!date) return null;
-  return date.toISOString();
 }
 
 export function nowTimestamps() {

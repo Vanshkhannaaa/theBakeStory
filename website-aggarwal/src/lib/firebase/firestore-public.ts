@@ -37,9 +37,7 @@ function decodeFields(fields: Record<string, FirestoreValue>): Record<string, un
 }
 
 async function getDocument(collection: string, docId: string): Promise<Record<string, unknown> | null> {
-  const res = await fetch(`${baseUrl()}/${collection}/${docId}`, {
-    next: { revalidate: 60 },
-  });
+  const res = await fetch(`${baseUrl()}/${collection}/${docId}`, { cache: "no-store" });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Firestore read failed (${res.status})`);
   const json = (await res.json()) as { fields?: Record<string, FirestoreValue> };
@@ -84,7 +82,7 @@ async function runQuery(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ structuredQuery }),
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 
   if (!res.ok) throw new Error(`Firestore query failed (${res.status})`);

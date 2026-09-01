@@ -19,7 +19,28 @@
       "public": "hosting-website",
       "cleanUrls": true,
       "trailingSlash": true,
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/menu/:category/:product",
+          "destination": "/menu/item/index.html"
+        },
+        {
+          "source": "/menu/:category",
+          "destination": "/menu/cat/index.html"
+        }
+      ]
     }
   ],
   "functions": [
