@@ -23,6 +23,8 @@ export interface Category {
   image?: string | null;
   order: number;
   active: boolean;
+  /** Featured in the homepage Shop by Occasion row. Missing Firestore field is treated as false. */
+  topCategory: boolean;
   deleted: boolean;
   totalProducts: number;
   createDate?: Date;

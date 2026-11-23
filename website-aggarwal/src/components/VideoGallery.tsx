@@ -56,11 +56,11 @@ export function VideoGallery({ videos }: VideoGalleryProps) {
   return (
     <section className="bg-white px-4 py-8 sm:px-6 md:py-10 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="mx-auto mb-6 max-w-2xl text-center md:mb-8">
-          <h2 className="font-[family-name:var(--font-manrope)] text-3xl font-medium tracking-[-0.01em] text-[#6b5348] md:text-4xl lg:text-[2.5rem]">
+        <div className="mb-4 text-left md:mb-5">
+          <h2 className="catalog-heading">
             Video Gallery
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-text-muted sm:text-base">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
             Watch our special moments
           </p>
         </div>

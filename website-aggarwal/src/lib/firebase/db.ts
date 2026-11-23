@@ -38,6 +38,7 @@ function mapCategory(id: string, data: FirebaseFirestore.DocumentData): Category
     image: data.image ?? null,
     order: data.order ?? 0,
     active: data.active ?? true,
+    topCategory: data.topCategory === true,
     deleted: data.deleted ?? false,
     totalProducts: data.totalProducts ?? 0,
     createDate: toDateOrNull(data.createDate) ?? undefined,

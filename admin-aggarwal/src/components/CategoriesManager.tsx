@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { CategoryFormDialog, ActiveToggle, type CategoryRow } from "@/components/CategoryFormDialog";
-import { getCategories, reorderCategories, restoreCategory, softDeleteCategory, updateCategory } from "@/lib/firebase/db";
+import { reorderCategories, restoreCategory, softDeleteCategory, updateCategory, MAX_TOP_CATEGORIES } from "@/lib/firebase/db";
 import { AdminDialog } from "@/components/AdminDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -22,6 +22,7 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
   const [editing, setEditing] = useState<CategoryRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CategoryRow | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [bannerError, setBannerError] = useState("");
 
   useEffect(() => {
     setItems(initial);
@@ -48,10 +49,29 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
     void persistOrder(next);
   };
 
+  const featuredCount = items.filter((c) => c.topCategory).length;
+
   const toggleActive = async (category: CategoryRow) => {
     setBusyId(category.id);
     await updateCategory(category.id, { active: !category.active });
     setItems((prev) => prev.map((c) => (c.id === category.id ? { ...c, active: !c.active } : c)));
+    setBusyId(null);
+  };
+
+  const toggleTopCategory = async (category: CategoryRow) => {
+    const next = !category.topCategory;
+    if (next && featuredCount >= MAX_TOP_CATEGORIES) {
+      setBannerError(`You can feature at most ${MAX_TOP_CATEGORIES} categories in Shop by Occasion`);
+      return;
+    }
+    setBusyId(category.id);
+    setBannerError("");
+    try {
+      await updateCategory(category.id, { topCategory: next });
+      setItems((prev) => prev.map((c) => (c.id === category.id ? { ...c, topCategory: next } : c)));
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : "Failed to update Shop by Occasion");
+    }
     setBusyId(null);
   };
 
@@ -79,7 +99,9 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
     <div className="admin-page">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <header className="admin-page-header mb-0">
-          <p className="admin-subtitle">{items.length} categories · drag rows to reorder</p>
+          <p className="admin-subtitle">
+            {items.length} categories · drag rows to reorder · Shop by Occasion {featuredCount}/{MAX_TOP_CATEGORIES}
+          </p>
         </header>
         <div className="flex shrink-0 gap-3">
           <button type="button" onClick={() => setBinOpen(true)} className="admin-btn-secondary">
@@ -103,6 +125,8 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
         </div>
       </div>
 
+      {bannerError && <p className="admin-error mt-4">{bannerError}</p>}
+
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
@@ -111,6 +135,7 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
               <th>Name</th>
               <th>Created on</th>
               <th>Active</th>
+              <th>Occasion</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -135,6 +160,13 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
                     checked={c.active}
                     onChange={() => toggleActive(c)}
                     label={`Toggle ${c.name}`}
+                  />
+                </td>
+                <td>
+                  <ActiveToggle
+                    checked={c.topCategory}
+                    onChange={() => toggleTopCategory(c)}
+                    label={`Shop by Occasion ${c.name}`}
                   />
                 </td>
                 <td>
@@ -172,6 +204,7 @@ export function CategoriesManager({ categories: initial, deletedCategories: init
       <CategoryFormDialog
         open={dialogOpen}
         category={editing}
+        featuredCount={featuredCount}
         onClose={() => {
           setDialogOpen(false);
           setEditing(null);

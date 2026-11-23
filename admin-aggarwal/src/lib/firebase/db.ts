@@ -19,6 +19,8 @@ import { compareProductsByCatalogOrder } from "@/lib/product-utils";
 
 // ─── Mappers ────────────────────────────────────────────────────────────────
 
+export const MAX_TOP_CATEGORIES = 4;
+
 function mapCategory(id: string, data: DocumentData): Category {
   return {
     id,
@@ -30,6 +32,7 @@ function mapCategory(id: string, data: DocumentData): Category {
     image: data.image ?? null,
     order: data.order ?? 0,
     active: data.active ?? true,
+    topCategory: data.topCategory === true,
     deleted: data.deleted ?? false,
     totalProducts: data.totalProducts ?? 0,
     createDate: toDateOrNull(data.createDate) ?? undefined,
@@ -127,10 +130,24 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryWithProdu
   return { ...category, products };
 }
 
-export async function createCategory(data: { name: string; subtitle?: string }) {
+async function countTopCategories(excludeId?: string): Promise<number> {
+  const snap = await adminDb.collection(COLLECTIONS.categories).get();
+  return snap.docs.filter((doc) => {
+    if (excludeId && doc.id === excludeId) return false;
+    const data = doc.data();
+    return data.deleted !== true && data.topCategory === true;
+  }).length;
+}
+
+export async function createCategory(data: { name: string; subtitle?: string; topCategory?: boolean }) {
   const trimmed = data.name.trim();
   if (await categorySlugExists(trimmed)) {
     throw new Error("A category with this name already exists");
+  }
+
+  const wantTop = data.topCategory === true;
+  if (wantTop && (await countTopCategories()) >= MAX_TOP_CATEGORIES) {
+    throw new Error(`You can feature at most ${MAX_TOP_CATEGORIES} categories in Shop by Occasion`);
   }
 
   const ref = adminDb.collection(COLLECTIONS.categories).doc();
@@ -145,6 +162,7 @@ export async function createCategory(data: { name: string; subtitle?: string }) 
     description: subtitle,
     order,
     active: true,
+    topCategory: wantTop,
     deleted: false,
     totalProducts: 0,
     createDate: timestamps.createdAt,
@@ -156,7 +174,13 @@ export async function createCategory(data: { name: string; subtitle?: string }) 
 
 export async function updateCategory(
   id: string,
-  data: Partial<{ name: string; subtitle: string | null; active: boolean; order: number }>,
+  data: Partial<{
+    name: string;
+    subtitle: string | null;
+    active: boolean;
+    order: number;
+    topCategory: boolean;
+  }>,
 ) {
   const ref = adminDb.collection(COLLECTIONS.categories).doc(id);
   const patch: Record<string, unknown> = { ...updateTimestamp() };
@@ -179,6 +203,15 @@ export async function updateCategory(
   }
   if (data.active !== undefined) {
     patch.active = data.active;
+  }
+  if (data.topCategory !== undefined) {
+    if (data.topCategory) {
+      const current = await countTopCategories(id);
+      if (current >= MAX_TOP_CATEGORIES) {
+        throw new Error(`You can feature at most ${MAX_TOP_CATEGORIES} categories in Shop by Occasion`);
+      }
+    }
+    patch.topCategory = data.topCategory;
   }
 
   await ref.update(patch);

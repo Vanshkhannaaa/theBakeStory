@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AdminDialog } from "@/components/AdminDialog";
 import type { Category } from "@/lib/firebase/types";
-import { createCategory, updateCategory } from "@/lib/firebase/db";
+import { createCategory, updateCategory, MAX_TOP_CATEGORIES } from "@/lib/firebase/db";
 
 export type CategoryRow = Category;
 
 interface CategoryFormDialogProps {
   open: boolean;
   category?: CategoryRow | null;
+  featuredCount: number;
   onClose: () => void;
 }
 
@@ -39,13 +40,14 @@ function ActiveToggle({
   );
 }
 
-export function CategoryFormDialog({ open, category, onClose }: CategoryFormDialogProps) {
+export function CategoryFormDialog({ open, category, featuredCount, onClose }: CategoryFormDialogProps) {
   const isEdit = Boolean(category);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [active, setActive] = useState(true);
+  const [topCategory, setTopCategory] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -54,10 +56,12 @@ export function CategoryFormDialog({ open, category, onClose }: CategoryFormDial
       setName(category.name);
       setSubtitle(category.subtitle ?? category.description ?? "");
       setActive(category.active);
+      setTopCategory(category.topCategory);
     } else {
       setName("");
       setSubtitle("");
       setActive(true);
+      setTopCategory(false);
     }
   }, [open, category]);
 
@@ -68,9 +72,14 @@ export function CategoryFormDialog({ open, category, onClose }: CategoryFormDial
 
     try {
       if (isEdit) {
-        await updateCategory(category!.id, { name, subtitle: subtitle.trim(), active });
+        await updateCategory(category!.id, {
+          name,
+          subtitle: subtitle.trim(),
+          active,
+          topCategory,
+        });
       } else {
-        await createCategory({ name, subtitle: subtitle.trim() });
+        await createCategory({ name, subtitle: subtitle.trim(), topCategory });
       }
       onClose();
       window.location.reload();
@@ -119,6 +128,29 @@ export function CategoryFormDialog({ open, category, onClose }: CategoryFormDial
             <ActiveToggle checked={active} onChange={setActive} label="Category active" />
           </div>
         )}
+
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className="admin-label mb-0">Shop by Occasion</span>
+            <p className="mt-1 text-xs text-ui-muted">
+              Show this category in the homepage occasion banner. Maximum {MAX_TOP_CATEGORIES} at a time
+              ({featuredCount} of {MAX_TOP_CATEGORIES} used).
+            </p>
+          </div>
+          <ActiveToggle
+            checked={topCategory}
+            onChange={(value) => {
+              const others = category?.topCategory ? featuredCount - 1 : featuredCount;
+              if (value && others >= MAX_TOP_CATEGORIES) {
+                setError(`You can feature at most ${MAX_TOP_CATEGORIES} categories in Shop by Occasion`);
+                return;
+              }
+              setError("");
+              setTopCategory(value);
+            }}
+            label="Shop by Occasion"
+          />
+        </div>
 
         {error && <p className="admin-error">{error}</p>}
 

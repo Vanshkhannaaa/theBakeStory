@@ -24,6 +24,7 @@ function mapCategory(id: string, data: Record<string, unknown>): Category {
     image: (data.image as string | null) ?? null,
     order: Number(data.order ?? 0),
     active: data.active !== false,
+    topCategory: data.topCategory === true,
     deleted: data.deleted === true,
     totalProducts: Number(data.totalProducts ?? 0),
     createDate: toDateOrNull(data.createDate) ?? undefined,
@@ -90,6 +91,14 @@ function mapVideo(id: string, data: Record<string, unknown>): Video {
 export async function getLiveCategories(): Promise<Category[]> {
   const docs = await publicDb.getPublicCategories();
   return docs.map((doc) => mapCategory(doc.id, doc.data)).filter((c) => c.active && !c.deleted);
+}
+
+export async function getLiveTopCategories(): Promise<Category[]> {
+  const categories = await getLiveCategories();
+  return categories
+    .filter((category) => category.topCategory)
+    .sort((a, b) => a.order - b.order)
+    .slice(0, 4);
 }
 
 export async function getLiveProducts(): Promise<ProductWithCategory[]> {
